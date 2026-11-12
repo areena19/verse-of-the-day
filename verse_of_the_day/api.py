@@ -2,14 +2,18 @@
 
 import requests
 
+import random
+from datetime import date
+
 BASE_URL = "https://api.alquran.cloud/v1"
 ARABIC_EDITION = "quran-uthmani"
 TRANSLATIONS = {
     "en": "en.sahih",
     "ur": "ur.jalandhry",
 }
-TIMEOUT_SECONDS = 10
 
+TIMEOUT_SECONDS = 10
+TOTAL_VERSES = 6236
 
 def fetch_verse(reference, language="en"):
     """Fetch one verse (Arabic + translation) from the API.
@@ -38,3 +42,14 @@ def fetch_verse(reference, language="en"):
         "translation": translated["text"],
         "translator": translated["edition"]["name"],
     }
+
+def pick_verse_number(daily=False):
+    """Return a verse number between 1 and 6236.
+
+    With daily=True the same verse is returned for the whole day,
+    because the random generator is seeded with today's date.
+    """
+    if daily:
+        generator = random.Random(date.today().isoformat())
+        return generator.randint(1, TOTAL_VERSES)
+    return random.randint(1, TOTAL_VERSES)
