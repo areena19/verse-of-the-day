@@ -3,6 +3,8 @@
 import argparse
 import sys
 
+import requests
+
 from verse_of_the_day.api import TRANSLATIONS, fetch_verse, pick_verse_number
 from verse_of_the_day.display import format_verse
 
@@ -37,5 +39,17 @@ def run():
     args = parse_args()
     reference = args.verse or pick_verse_number(daily=args.daily)
 
-    verse = fetch_verse(reference, args.lang)
+    try:
+        verse = fetch_verse(reference, args.lang)
+    except requests.exceptions.Timeout:
+        sys.exit("Error: the API took too long to respond. Please try again.")
+    except requests.exceptions.ConnectionError:
+        sys.exit("Error: could not connect. Check your internet connection.")
+    except requests.exceptions.HTTPError as error:
+        if error.response is not None and error.response.status_code in (400, 404):
+            sys.exit(f'Error: verse "{reference}" was not found. Try something like 2:255.')
+        sys.exit(f"Error: the API returned an error ({error}).")
+    except (KeyError, ValueError):
+        sys.exit("Error: the API returned data in an unexpected format.")
+
     print(format_verse(verse))
